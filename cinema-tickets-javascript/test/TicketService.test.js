@@ -17,7 +17,7 @@ describe("TicketService", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     ticketService = new TicketService(
-      mockTicketPaymentServicee,
+      mockTicketPaymentService,
       mockSeatReservationService
     );
   });
