@@ -60,18 +60,11 @@ export default class TicketService {
       );
     }
 
-    const allowedTypes = ["ADULT", "CHILD", "INFANT"];
-
     ticketTypeRequests.forEach((request) => {
       if (!(request instanceof TicketTypeRequest)) {
         throw new InvalidPurchaseException("Invalid ticket type request");
       }
 
-      const ticketType = request.getTicketType();
-
-      if (!allowedTypes.includes(ticketType)) {
-        throw new InvalidPurchaseException("Unknown ticket type");
-      }
     });
   }
 
