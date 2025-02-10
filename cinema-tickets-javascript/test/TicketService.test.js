@@ -58,6 +58,9 @@ describe("TicketService", () => {
     expect(() => ticketService.purchaseTickets(-1, ...requests)).toThrow(
       InvalidPurchaseException
     );
+    expect(() => ticketService.purchaseTickets("TEST", ...requests)).toThrow(
+      InvalidPurchaseException
+    );
   });
 
   test("throws error when ticket totals exceed max tickets", () => {
@@ -71,7 +74,7 @@ describe("TicketService", () => {
 
   test("should throw an error if unknown ticket type is requested", () => {
     expect(() => {
-      ticketService.purchaseTickets(1, new TicketTypeRequest("UNKNOWN", 1));
+      ticketService.purchaseTickets(1, new TicketTypeRequest("HUMAN", 1));
     }).toThrow(TypeError);
   });
 

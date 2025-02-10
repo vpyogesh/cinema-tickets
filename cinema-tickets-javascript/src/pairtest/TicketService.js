@@ -8,13 +8,16 @@ export default class TicketService {
    * Should only have private methods other than the one below.
    */
 
+  // Private fields for payment and reservation services
   #ticketPaymentService;
   #seatReservationService;
 
+  // Constants for maximum tickets and ticket prices
   #MAX_TICKETS = 25;
-  #ADULT_TICKET_PRICE = 25
-  #CHILD_TICKET_PRICE = 15
+  #ADULT_TICKET_PRICE = 25;
+  #CHILD_TICKET_PRICE = 15;
 
+  // Static object to hold ticket totals
   static #TicketTotals = {
     totalTickets: 0,
     totalAdultTickets: 0,
@@ -22,6 +25,8 @@ export default class TicketService {
     totalInfantTickets: 0,
   };
 
+  // Constructor to initialize payment and reservation services
+  // Might consider using dependency injection for these services
   constructor(
     ticketPaymentService = new TicketPaymentService(),
     seatReservationService = new SeatReservationService()
@@ -30,29 +35,38 @@ export default class TicketService {
     this.#seatReservationService = seatReservationService;
   }
 
+  // Public method to purchase tickets
   purchaseTickets(accountId, ...ticketTypeRequests) {
+    // Validate that at least one ticket is requested
     if (ticketTypeRequests.length === 0) {
       throw new InvalidPurchaseException("No tickets requested");
     }
 
+    // Validate account ID and ticket type requests
     this.#validateAccountId(accountId);
     this.#validateTicketTypeRequests(ticketTypeRequests);
+
+    // Calculate ticket totals and validate them
     const totals = this.#calculateTicketTotals(ticketTypeRequests);
     this.#validateTicketTotals(totals);
 
-    const totalAmountToPay = this.#calculateTotalAmount(totals)
-    const totalSeatsToReserve = this.#calculateSeatsToReserve(totals)
+    // Calculate total amount to pay and total seats to reserve
+    const totalAmountToPay = this.#calculateTotalAmount(totals);
+    const totalSeatsToReserve = this.#calculateSeatsToReserve(totals);
 
-    this.#ticketPaymentService.makePayment(accountId, totalAmountToPay)
-    this.#seatReservationService.reserveSeat(accountId, totalSeatsToReserve)
+    // Make payment and reserve seats
+    this.#ticketPaymentService.makePayment(accountId, totalAmountToPay);
+    this.#seatReservationService.reserveSeat(accountId, totalSeatsToReserve);
   }
 
+  // Private method to validate account ID
   #validateAccountId(accountId) {
-    if (typeof accountId !== "number" || accountId <= 0) {
+    if (!Number.isInteger(accountId) || accountId <= 0) {
       throw new InvalidPurchaseException(`Invalid account ID: ${accountId}`);
     }
   }
 
+  // Private method to validate ticket type requests
   #validateTicketTypeRequests(ticketTypeRequests) {
     if (!ticketTypeRequests || ticketTypeRequests.length === 0) {
       throw new InvalidPurchaseException(
@@ -64,10 +78,10 @@ export default class TicketService {
       if (!(request instanceof TicketTypeRequest)) {
         throw new InvalidPurchaseException("Invalid ticket type request");
       }
-
     });
   }
 
+  // Private method to validate ticket totals
   #validateTicketTotals({
     totalTickets,
     totalAdultTickets,
@@ -97,6 +111,7 @@ export default class TicketService {
     }
   }
 
+  // Private method to calculate ticket totals
   #calculateTicketTotals(ticketTypeRequests) {
     const ticketTypeMap = {
       ADULT: "totalAdultTickets",
@@ -120,14 +135,16 @@ export default class TicketService {
     return totals;
   }
 
-  #calculateTotalAmount ({ totalAdultTickets, totalChildTickets }) {
+  // Private method to calculate total amount to pay
+  #calculateTotalAmount({ totalAdultTickets, totalChildTickets }) {
     return (
       totalAdultTickets * this.#ADULT_TICKET_PRICE +
       totalChildTickets * this.#CHILD_TICKET_PRICE
-    )
+    );
   }
 
-  #calculateSeatsToReserve ({ totalAdultTickets, totalChildTickets }) {
-    return totalAdultTickets + totalChildTickets
+  // Private method to calculate total seats to reserve
+  #calculateSeatsToReserve({ totalAdultTickets, totalChildTickets }) {
+    return totalAdultTickets + totalChildTickets;
   }
 }
