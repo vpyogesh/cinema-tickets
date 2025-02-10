@@ -11,6 +11,8 @@ export default class TicketService {
   #ticketPaymentService;
   #seatReservationService;
 
+  #MAX_TICKETS = 25;
+
   static #TicketTotals = {
     totalTickets: 0,
     totalAdultTickets: 0,
@@ -32,9 +34,11 @@ export default class TicketService {
     }
 
     this.#validateAccountId(accountId);
+    this.#validateTicketTypeRequests(ticketTypeRequests);
 
     const totals = this.#calculateTicketTotals(ticketTypeRequests);
 
+    this.#validateTicketTotals(totals);
   }
 
   #validateAccountId(accountId) {
@@ -43,34 +47,67 @@ export default class TicketService {
     }
   }
 
-  #calculateTicketTotals(ticketTypeRequests) {
-
+  #validateTicketTypeRequests(ticketTypeRequests) {
     if (!ticketTypeRequests || ticketTypeRequests.length === 0) {
       throw new InvalidPurchaseException(
         "At least one ticket type request must be provided"
       );
     }
 
+    const allowedTypes = ["ADULT", "CHILD", "INFANT"];
+
+    ticketTypeRequests.forEach((request) => {
+      if (!(request instanceof TicketTypeRequest)) {
+        throw new InvalidPurchaseException("Invalid ticket type request");
+      }
+
+      const ticketType = request.getTicketType();
+
+      if (!allowedTypes.includes(ticketType)) {
+        throw new InvalidPurchaseException("Unknown ticket type");
+      }
+    });
+  }
+
+  #validateTicketTotals({
+    totalTickets,
+    totalAdultTickets,
+    totalChildTickets,
+    totalInfantTickets,
+  }) {
+    if (totalTickets > this.#MAX_TICKETS) {
+      throw new InvalidPurchaseException(
+        `Cannot purchase more than ${this.#MAX_TICKETS} tickets at a time`
+      );
+    }
+    if (
+      totalAdultTickets === 0 &&
+      (totalChildTickets > 0 || totalInfantTickets > 0)
+    ) {
+      throw new InvalidPurchaseException(
+        "Child or Infant tickets cannot be purchased without at least one Adult ticket"
+      );
+    }
+    if (totalInfantTickets > totalAdultTickets) {
+      throw new InvalidPurchaseException(
+        "Each infant must be accompanied by an adult. Too many infants."
+      );
+    }
+  }
+
+  #calculateTicketTotals(ticketTypeRequests) {
     const ticketTypeMap = {
-      "ADULT": "totalAdultTickets",
-      "CHILD": "totalChildTickets",
-      "INFANT": "totalInfantTickets"
+      ADULT: "totalAdultTickets",
+      CHILD: "totalChildTickets",
+      INFANT: "totalInfantTickets",
     };
 
     const totals = ticketTypeRequests.reduce(
       (acc, request) => {
-        if (!(request instanceof TicketTypeRequest)) {
-          throw new InvalidPurchaseException("Invalid ticket type request");
-        }
-
         const count = request.getNoOfTickets();
         acc.totalTickets += count;
 
         const ticketType = request.getTicketType();
-        if (!ticketTypeMap[ticketType]) {
-          throw new InvalidPurchaseException("Unknown ticket type");
-        }
-
         acc[ticketTypeMap[ticketType]] += count;
 
         return acc;
