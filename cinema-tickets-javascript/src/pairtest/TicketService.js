@@ -2,6 +2,7 @@ import TicketTypeRequest from "./lib/TicketTypeRequest.js";
 import InvalidPurchaseException from "./lib/InvalidPurchaseException.js";
 import TicketPaymentService from "../thirdparty/paymentgateway/TicketPaymentService.js";
 import SeatReservationService from "../thirdparty/seatbooking/SeatReservationService.js";
+import { orderConstraints, ticketCost } from "../config/ticketConfig.js";
 
 export default class TicketService {
   /**
@@ -11,11 +12,6 @@ export default class TicketService {
   // Private fields for payment and reservation services
   #ticketPaymentService;
   #seatReservationService;
-
-  // Constants for maximum tickets and ticket prices
-  #MAX_TICKETS = 25;
-  #ADULT_TICKET_PRICE = 25;
-  #CHILD_TICKET_PRICE = 15;
 
   // Static object to hold ticket totals
   static #TicketTotals = {
@@ -91,9 +87,9 @@ export default class TicketService {
     if (totalTickets === 0) {
       throw new InvalidPurchaseException("No tickets requested");
     }
-    if (totalTickets > this.#MAX_TICKETS) {
+    if (totalTickets > orderConstraints.MAX_TICKETS) {
       throw new InvalidPurchaseException(
-        `Cannot purchase more than ${this.#MAX_TICKETS} tickets at a time`
+        `Cannot purchase more than ${orderConstraints.MAX_TICKETS} tickets at a time`
       );
     }
     if (
@@ -138,8 +134,8 @@ export default class TicketService {
   // Private method to calculate total amount to pay
   #calculateTotalAmount({ totalAdultTickets, totalChildTickets }) {
     return (
-      totalAdultTickets * this.#ADULT_TICKET_PRICE +
-      totalChildTickets * this.#CHILD_TICKET_PRICE
+      totalAdultTickets * ticketCost.ADULT +
+      totalChildTickets * ticketCost.CHILD
     );
   }
 
