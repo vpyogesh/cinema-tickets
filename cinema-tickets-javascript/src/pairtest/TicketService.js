@@ -12,6 +12,8 @@ export default class TicketService {
   #seatReservationService;
 
   #MAX_TICKETS = 25;
+  #ADULT_TICKET_PRICE = 25
+  #CHILD_TICKET_PRICE = 15
 
   static #TicketTotals = {
     totalTickets: 0,
@@ -35,10 +37,14 @@ export default class TicketService {
 
     this.#validateAccountId(accountId);
     this.#validateTicketTypeRequests(ticketTypeRequests);
-
     const totals = this.#calculateTicketTotals(ticketTypeRequests);
-
     this.#validateTicketTotals(totals);
+
+    const totalAmountToPay = this.#calculateTotalAmount(totals)
+    const totalSeatsToReserve = this.#calculateSeatsToReserve(totals)
+
+    this.#ticketPaymentService.makePayment(accountId, totalAmountToPay)
+    this.#seatReservationService.reserveSeat(accountId, totalSeatsToReserve)
   }
 
   #validateAccountId(accountId) {
@@ -75,6 +81,9 @@ export default class TicketService {
     totalChildTickets,
     totalInfantTickets,
   }) {
+    if (totalTickets === 0) {
+      throw new InvalidPurchaseException("No tickets requested");
+    }
     if (totalTickets > this.#MAX_TICKETS) {
       throw new InvalidPurchaseException(
         `Cannot purchase more than ${this.#MAX_TICKETS} tickets at a time`
@@ -116,5 +125,16 @@ export default class TicketService {
     );
 
     return totals;
+  }
+
+  #calculateTotalAmount ({ totalAdultTickets, totalChildTickets }) {
+    return (
+      totalAdultTickets * this.#ADULT_TICKET_PRICE +
+      totalChildTickets * this.#CHILD_TICKET_PRICE
+    )
+  }
+
+  #calculateSeatsToReserve ({ totalAdultTickets, totalChildTickets }) {
+    return totalAdultTickets + totalChildTickets
   }
 }
